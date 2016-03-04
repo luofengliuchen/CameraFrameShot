@@ -3,23 +3,27 @@ package luofeng.cameraframeshot;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
+import android.media.MediaCodec;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -27,6 +31,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.VideoView;
+
+import net.majorkernelpanic.streaming.SessionBuilder;
+import net.majorkernelpanic.streaming.audio.AudioQuality;
+import net.majorkernelpanic.streaming.gl.SurfaceView;
+import net.majorkernelpanic.streaming.rtsp.RtspServer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,6 +57,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private boolean isFrontCamera = true;
     public static final int MSG = 1;
     public LinearLayout container;
+    public VideoView videoView;
+    public Button btn2;
 
     Handler mHandler = new Handler(){
         @Override
@@ -59,7 +71,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                     if(container.getChildCount()>200){
                         container.removeAllViews();
                     }
-
                     TextView tv = new TextView(MainActivity.this);
                     tv.setTextColor(Color.BLACK);
                     tv.setText(msgObject);
@@ -78,17 +89,30 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         setContentView(R.layout.activity_main);
         switchButton = (Button) findViewById(R.id.btn_switch);
         container = (LinearLayout) findViewById(R.id.ll_container);
+        videoView = (VideoView) findViewById(R.id.vedio);
+
+        mSurfaceview = (SurfaceView)findViewById(R.id.surface_view);
+        initSurfaceView();
+
+        btn2 = (Button) findViewById(R.id.btn2);
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,LibStreamingActivity.class);
+                startActivity(intent);
+            }
+        });
         switchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                isFrontCamera = !isFrontCamera;
-//                releaseCamera();
-//                createCamera(isFrontCamera);
-//                initCamera();
-                capture();
+                isFrontCamera = !isFrontCamera;
+                releaseCamera();
+                createCamera(isFrontCamera);
+                initCamera();
+//                capture();
             }
         });
-        initSurfaceView();
+
     }
 
 
@@ -288,6 +312,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 });
 
 
+//                mCamera.setPreviewCallback(new H264Coding());
+
+
+
                 // 设定配置参数并开启预览
                 mCamera.setParameters(parameters); // 将Camera.Parameters设定予Camera
                 mCamera.startPreview(); // 打开预览画面
@@ -310,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     // InitSurfaceView
     private void initSurfaceView(){
-        mSurfaceview = (SurfaceView)findViewById(R.id.surface_view);
+
         mSurfaceHolder = mSurfaceview.getHolder(); // 绑定SurfaceView，取得SurfaceHolder对象
         mSurfaceHolder.addCallback(this); // SurfaceHolder加入回调接口
         // mSurfaceHolder.setFixedSize(176, 144); // 预览大小設置
@@ -325,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
     }
 
-
+    //拍照
     Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
 
         @Override
@@ -349,13 +377,12 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                     }
                 }, myJpegCallback);
             }
-
         }
     };
 
 
 
-
+    //拍照
     Camera.PictureCallback myJpegCallback = new Camera.PictureCallback() {
 
         @Override
