@@ -40,7 +40,6 @@ public class LibStreamingActivity extends AppCompatActivity {
                 .setContext(getApplicationContext())
                 .setAudioEncoder(SessionBuilder.AUDIO_NONE)
                 .setVideoEncoder(SessionBuilder.VIDEO_H264);
-        SessionBuilder.getInstance().getSurfaceView();
         // Starts the RTSP server
         this.startService(new Intent(this,RtspServer.class));
     }
